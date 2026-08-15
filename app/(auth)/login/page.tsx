@@ -75,6 +75,37 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
 
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-900">
+                  Or instant access
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={async () => {
+                setError(null);
+                try {
+                  const res = await fetch("/api/auth/demo-login", { method: "POST" });
+                  if (res.ok) {
+                    window.location.href = "/dashboard";
+                  }
+                } catch {
+                  setError("Failed to launch demo account.");
+                }
+              }}
+              className="w-full justify-center border border-emerald-500/40 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-600/40 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+            >
+              ⚡ 1-Click Demo Workspace
+            </Button>
+
+
             <p className="text-center text-xs text-zinc-600">
               Don&apos;t have an account?{" "}
               <Link
@@ -85,6 +116,7 @@ export default function LoginPage() {
               </Link>
             </p>
           </form>
+
         </Card>
       </div>
     </div>

@@ -4,7 +4,15 @@ import { businessRepository } from "@/repositories/business-repository";
 import { memberRepository } from "@/repositories/member-repository";
 import { subscriptionRepository } from "@/repositories/subscription-repository";
 import { preferencesRepository } from "@/repositories/preferences-repository";
+import {
+  seedDemoData,
+  DEMO_USER_ID,
+  DEMO_USER_EMAIL,
+  DEMO_PASSWORD,
+} from "@/lib/demo/seed";
+
 import type { AuthSession, UserProfile } from "@/types/auth";
+
 import type {
   RegisterInput,
   LoginInput,
@@ -89,6 +97,11 @@ export class AuthService {
   }
 
   async login(input: LoginInput): Promise<AuthSession> {
+    const isDemo = input.email.toLowerCase().trim() === DEMO_USER_EMAIL;
+    if (isDemo) {
+      await seedDemoData();
+    }
+
     const profile = await profileRepository.findByEmail(input.email);
     if (!profile) {
       throw new AppError({
@@ -97,8 +110,11 @@ export class AuthService {
       });
     }
 
+    if (isDemo && input.password === DEMO_PASSWORD) {
+      return this.buildSession(profile);
+    }
+
     const storedPassword = AuthService.passwords.get(profile.id);
-    // Allow login if matching stored password or if running in mock demo mode
     if (storedPassword && storedPassword !== input.password) {
       throw new AppError({
         code: "UNAUTHORIZED",
@@ -109,7 +125,12 @@ export class AuthService {
     return this.buildSession(profile);
   }
 
+
   async getSession(userId: string, preferredBusinessId?: string): Promise<AuthSession> {
+    if (userId === DEMO_USER_ID) {
+      await seedDemoData();
+    }
+
     const profile = await profileRepository.findById(userId);
     if (!profile) {
       throw new AppError({
@@ -120,6 +141,7 @@ export class AuthService {
 
     return this.buildSession(profile, preferredBusinessId);
   }
+
 
   async updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile> {
     const updated = await profileRepository.update(userId, input);
