@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useIntelligence } from "@/hooks/use-intelligence";
@@ -9,6 +10,8 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { AIMessageModal } from "@/components/ai/ai-message-modal";
+import { AICampaignModal } from "@/components/ai/ai-campaign-modal";
 import type {
   ChurnRiskTier,
   CustomerSegment,
@@ -39,6 +42,13 @@ export default function OpportunitiesPage() {
     setFilters,
   } = useIntelligence(activeBusinessId);
 
+  // AI Modal States
+  const [isCampaignOpen, setIsCampaignOpen] = useState(false);
+  const [selectedCustomerForMsg, setSelectedCustomerForMsg] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -52,12 +62,22 @@ export default function OpportunitiesPage() {
           </p>
         </div>
 
-        <Link href="/dashboard/customers">
-          <Button variant="secondary" size="sm">
-            👥 All Customers
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsCampaignOpen(true)}
+          >
+            💡 AI Campaign Strategy
           </Button>
-        </Link>
+          <Link href="/dashboard/customers">
+            <Button variant="secondary" size="sm">
+              👥 All Customers
+            </Button>
+          </Link>
+        </div>
       </div>
+
 
       {/* Revenue Estimation Disclaimer Alert */}
       <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
@@ -276,7 +296,18 @@ export default function OpportunitiesPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setSelectedCustomerForMsg({
+                          id: opp.customerId,
+                          name: opp.customerName,
+                        })
+                      }
+                    >
+                      ⚡ AI Outreach
+                    </Button>
                     <Link href={`/dashboard/customers/${opp.customerId}`}>
                       <Button variant="secondary" size="sm">
                         View Details →
@@ -316,6 +347,27 @@ export default function OpportunitiesPage() {
           </div>
         ) : null}
       </div>
+
+      {/* AI Message Outreach Modal */}
+      {selectedCustomerForMsg && activeBusinessId ? (
+        <AIMessageModal
+          isOpen={Boolean(selectedCustomerForMsg)}
+          onClose={() => setSelectedCustomerForMsg(null)}
+          businessId={activeBusinessId}
+          customerId={selectedCustomerForMsg.id}
+          customerName={selectedCustomerForMsg.name}
+        />
+      ) : null}
+
+      {/* AI Campaign Strategist Modal */}
+      {activeBusinessId ? (
+        <AICampaignModal
+          isOpen={isCampaignOpen}
+          onClose={() => setIsCampaignOpen(false)}
+          businessId={activeBusinessId}
+        />
+      ) : null}
     </div>
   );
 }
+

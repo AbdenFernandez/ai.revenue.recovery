@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { AIMessageModal } from "@/components/ai/ai-message-modal";
 import type { Customer, CustomerStatus } from "@/types/customer";
 import type { CustomerOpportunity } from "@/types/intelligence";
 
@@ -27,7 +28,9 @@ export default function CustomerDetailPage({
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [opportunity, setOpportunity] = useState<CustomerOpportunity | null>(null);
+  const [isAiMsgOpen, setIsAiMsgOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
 
   // Edit Modal State
@@ -203,6 +206,12 @@ export default function CustomerDetailPage({
 
         <div className="flex items-center gap-2">
           <Button
+            size="sm"
+            onClick={() => setIsAiMsgOpen(true)}
+          >
+            ⚡ AI Outreach
+          </Button>
+          <Button
             variant="secondary"
             size="sm"
             onClick={() => setIsEditOpen(true)}
@@ -220,6 +229,7 @@ export default function CustomerDetailPage({
           ) : null}
         </div>
       </div>
+
 
       {/* Main Grid: Info + Financial Metrics */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -558,6 +568,18 @@ export default function CustomerDetailPage({
           </div>
         </div>
       </Modal>
+
+      {/* AI Message Modal */}
+      {isAiMsgOpen && activeBusinessId && customer ? (
+        <AIMessageModal
+          isOpen={isAiMsgOpen}
+          onClose={() => setIsAiMsgOpen(false)}
+          businessId={activeBusinessId}
+          customerId={customer.id}
+          customerName={customer.name}
+        />
+      ) : null}
     </div>
   );
 }
+
