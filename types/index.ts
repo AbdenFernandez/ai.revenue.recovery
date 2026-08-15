@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./customer";
 
 export type TenantId = string;
 

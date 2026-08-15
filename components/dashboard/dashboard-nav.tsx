@@ -6,10 +6,12 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Overview", href: "/dashboard" },
+  { name: "Customers", href: "/dashboard/customers" },
   { name: "Team Members", href: "/dashboard/members" },
   { name: "Settings & AI Tone", href: "/dashboard/settings" },
   { name: "Profile", href: "/dashboard/profile" },
 ];
+
 
 export function DashboardNav() {
   const pathname = usePathname();

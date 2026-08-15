@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps
@@ -15,7 +15,10 @@ const variantClasses: Record<ButtonVariant, string> = {
   secondary:
     "border border-border bg-card text-foreground hover:bg-zinc-50 focus-visible:ring-zinc-300",
   ghost: "text-foreground hover:bg-zinc-100 focus-visible:ring-zinc-300",
+  danger:
+    "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500",
 };
+
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-sm",
