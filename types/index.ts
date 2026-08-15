@@ -3,6 +3,8 @@ export * from "./customer";
 export * from "./intelligence";
 export * from "./ai";
 export * from "./campaign";
+export * from "./email";
+
 
 
 
