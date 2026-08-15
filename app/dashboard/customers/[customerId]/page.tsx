@@ -13,6 +13,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { Customer, CustomerStatus } from "@/types/customer";
+import type { CustomerOpportunity } from "@/types/intelligence";
 
 export default function CustomerDetailPage({
   params,
@@ -25,6 +26,7 @@ export default function CustomerDetailPage({
   const { role: myRole } = useBusiness(activeBusinessId);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [opportunity, setOpportunity] = useState<CustomerOpportunity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,31 +57,40 @@ export default function CustomerDetailPage({
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/businesses/${activeBusinessId}/customers/${customerId}`,
-      );
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.error?.message || "Customer not found.");
+      const [resCustomer, resIntel] = await Promise.all([
+        fetch(`/api/businesses/${activeBusinessId}/customers/${customerId}`),
+        fetch(`/api/businesses/${activeBusinessId}/intelligence/customers/${customerId}`),
+      ]);
+
+      const jsonCustomer = await resCustomer.json();
+      if (!resCustomer.ok) {
+        throw new Error(jsonCustomer.error?.message || "Customer not found.");
       }
-      setCustomer(json.data);
+      setCustomer(jsonCustomer.data);
+
+      if (resIntel.ok) {
+        const jsonIntel = await resIntel.json();
+        setOpportunity(jsonIntel.data);
+      }
+
       // Pre-fill edit fields
-      setEditName(json.data.name);
-      setEditEmail(json.data.email);
-      setEditPhone(json.data.phone || "");
-      setEditCompany(json.data.company || "");
-      setEditTotalAmount(json.data.totalPurchaseAmount);
-      setEditPurchaseCount(json.data.purchaseCount);
-      setEditServiceType(json.data.serviceType || "");
-      setEditStatus(json.data.customerStatus);
-      setEditConsent(json.data.consentStatus);
-      setEditOptOut(json.data.optOutStatus);
+      setEditName(jsonCustomer.data.name);
+      setEditEmail(jsonCustomer.data.email);
+      setEditPhone(jsonCustomer.data.phone || "");
+      setEditCompany(jsonCustomer.data.company || "");
+      setEditTotalAmount(jsonCustomer.data.totalPurchaseAmount);
+      setEditPurchaseCount(jsonCustomer.data.purchaseCount);
+      setEditServiceType(jsonCustomer.data.serviceType || "");
+      setEditStatus(jsonCustomer.data.customerStatus);
+      setEditConsent(jsonCustomer.data.consentStatus);
+      setEditOptOut(jsonCustomer.data.optOutStatus);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load customer.");
     } finally {
       setIsLoading(false);
     }
   }, [activeBusinessId, customerId]);
+
 
   useEffect(() => {
     void fetchCustomer();
@@ -289,8 +300,89 @@ export default function CustomerDetailPage({
         </Card>
       </div>
 
+      {/* AI Revenue Intelligence & Opportunity Card */}
+      {opportunity ? (
+        <Card
+          title="AI Revenue Intelligence & Recovery Profile"
+          description="Deterministic RFM scoring, churn risk calculation, and recovery opportunity estimate"
+        >
+          <div className="space-y-4">
+            {/* Top Metrics Row */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <p className="text-xs text-zinc-500">Calculated Segment</p>
+                <div className="mt-1">
+                  <Badge
+                    variant={
+                      opportunity.segment === "VIP" || opportunity.segment === "High Value"
+                        ? "success"
+                        : opportunity.segment === "At Risk" || opportunity.segment === "Win Back"
+                        ? "warning"
+                        : "default"
+                    }
+                  >
+                    {opportunity.segment}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <p className="text-xs text-zinc-500">Churn Risk</p>
+                <p className="mt-1 text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  {Math.round(opportunity.churnRisk * 100)}% ({opportunity.churnRiskTier})
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <p className="text-xs text-zinc-500">Win-Back Score</p>
+                <p className="mt-1 text-base font-bold text-indigo-600 dark:text-indigo-400">
+                  {Math.round(opportunity.winBackScore * 100)}%
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <p className="text-xs text-zinc-500">Estimated Opportunity</p>
+                <p className="mt-1 text-base font-black text-emerald-600 dark:text-emerald-400">
+                  ${opportunity.potentialRevenue.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Explainable Reason Narrative */}
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 p-3 text-sm font-medium text-zinc-800 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-200">
+              🔍 <strong>Intelligence Analysis:</strong> {opportunity.reason}
+            </div>
+
+            {/* Recommended Action Playbook Box */}
+            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 text-xs text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-300">
+              <strong>Recommended Action:</strong> {opportunity.recommendedAction}
+            </div>
+
+            {/* RFM Score Breakdown */}
+            <div className="flex flex-wrap gap-2 pt-1 text-xs text-zinc-500">
+              <span className="rounded border border-zinc-200 px-2.5 py-1 dark:border-zinc-800">
+                Recency: <strong>{opportunity.rfm.recencyScore}/100</strong>
+              </span>
+              <span className="rounded border border-zinc-200 px-2.5 py-1 dark:border-zinc-800">
+                Frequency: <strong>{opportunity.rfm.frequencyScore}/100</strong>
+              </span>
+              <span className="rounded border border-zinc-200 px-2.5 py-1 dark:border-zinc-800">
+                Monetary: <strong>{opportunity.rfm.monetaryScore}/100</strong>
+              </span>
+              <span className="rounded border border-zinc-200 px-2.5 py-1 dark:border-zinc-800">
+                Engagement: <strong>{opportunity.rfm.engagementScore}/100</strong>
+              </span>
+              <span className="rounded border border-zinc-200 px-2.5 py-1 dark:border-zinc-800">
+                Customer Value Score: <strong>{opportunity.rfm.customerValueScore}/100</strong>
+              </span>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       {/* Status & Compliance Section */}
       <Card title="Recovery Status & Compliance" description="AI targeting permissions">
+
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
             <p className="text-xs text-zinc-500">Lifecycle Status</p>

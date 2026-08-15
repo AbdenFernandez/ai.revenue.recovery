@@ -1,5 +1,7 @@
 export * from "./auth";
 export * from "./customer";
+export * from "./intelligence";
+
 
 export type TenantId = string;
 
